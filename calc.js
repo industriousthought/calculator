@@ -1,0 +1,218 @@
+
+            var Calculator = function (p) {
+                var core = new function() {
+                    var currentDisplay = '';
+                    var mem = null;
+                    var currentOp;
+                    var con = true;
+
+                    var calculate = function (op) {
+                        switch (op) {
+                        case '+':
+                            return parseFloat(mem) + parseFloat(currentDisplay);
+                            break;
+                        case '-':
+                            return parseFloat(mem) - parseFloat(currentDisplay);
+                            break;
+                        case 'x':
+                            return parseFloat(mem) * parseFloat(currentDisplay);
+                            break;
+                        case '%':
+                            return parseFloat(mem) / parseFloat(currentDisplay);
+                            break;
+                        case 's':
+                            return Math.pow(parseFloat(currentDisplay), 2);
+                            break;
+                        case 'r':
+                            return Math.sqrt(parseFloat(currentDisplay));
+                            break;
+                        }
+                    }
+
+                    this.buttonPush = function(symbol) {
+                        console.log(symbol);
+                        if (parseInt(symbol) || symbol == 0 || symbol == '.') {
+                            console.log('number');
+                            if (con) {
+                                currentDisplay += symbol;
+                            } else {
+                                mem = currentDisplay;
+                                currentDisplay = symbol;
+                                con = true;
+                            }
+
+                        } else {
+                            if (symbol == 'C') {
+                                if (currentDisplay == '') { 
+                                    if (currentOp) {
+                                        currentOp = null;
+                                    } else {
+                                        mem = null;
+                                    }
+                                } else {
+                                    currentDisplay = '';
+                                }
+                            } else if (symbol == '=') {
+                                if  (currentOp && mem) {
+                                    currentDisplay = calculate(currentOp);
+                                    currentOp = null; 
+                                }
+                                
+                                
+                            } else {
+                                if (symbol == 's' || symbol == 'r' && currentDisplay != '') {
+                                    currentDisplay = calculate(symbol);
+                                    mem = '';
+                                } else if (mem && currentOp) {
+                                    mem = calculate(currentOp);
+                                    currentDisplay = mem;
+                                } else {
+                                    currentOp = symbol;
+                                }
+                                con = null;
+
+                            }
+
+
+                        }
+
+
+                    display.innerText = currentDisplay;
+                    }
+                };
+
+                var Button = function (p) { 
+                    
+                    var canvas = document.createElement('canvas');
+                    var ctx = canvas.getContext('2d');
+                    var pixel = ctx.createImageData(1, 1);
+                    pixel.data[4] = 0;
+                    var img, hoverImg, clickImg, symbol, container;
+                    var text;
+                    var cornerCutter = function () {
+                        ctx.putImageData(pixel, 0, 0);
+                        ctx.putImageData(pixel, 0, canvas.height - 1);
+                        ctx.putImageData(pixel, canvas.width - 1, 0);
+                        ctx.putImageData(pixel, canvas.width - 1, canvas.height - 1);
+                    }
+                    var makeImg = function (p) {
+
+                        var img = new Image();
+                        img.style.position = 'absolute';
+                        img.style.top = '0px';
+                        img.style.left = '0px';
+                        img.style.opacity = '0';
+                        ctx.save();
+                        ctx.fillStyle = p.inner;
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.strokeStyle = p.outter;
+                        ctx.strokeRect(0, 0, canvas.width, canvas.height);
+                        cornerCutter();
+                        img.src = canvas.toDataURL("image/png");
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.restore();
+                        return img;
+
+                    };
+                    var hoverIn = function () { hoverImg.style.opacity = '1'; }; 
+                    var hoverOut = function () { hoverImg.style.opacity = '0'; }; 
+                    var mouseDown = function () { 
+                        clickImg.style.opacity = '1';
+                        core.buttonPush(p.symbol);
+                    };
+                    var mouseUp = function () { clickImg.style.opacity = '0'; };
+
+                    canvas.width = p.width;
+                    canvas.height = p.height;
+
+                    img = makeImg( {inner: '#DDDDFF', outter: '#BBBBFF'} );
+                    hoverImg = makeImg( {inner: '#EEEE00', outter: '#BBBBFF'} );
+                    clickImg = makeImg( {inner: '#AAAA00', outter: '#0000DD'} );
+                    symbol = document.createElement('span');
+                    symbol.innerHTML = p.display ? p.display : p.symbol; 
+                    symbol.style.zIndex = 2;
+                    symbol.style.position = 'relative';
+                    symbol.style.lineHeight = p.height + 'px';
+
+                    container = document.createElement('li');
+                    container.appendChild(img);
+                    container.appendChild(hoverImg);
+                    container.appendChild(clickImg);
+                    container.appendChild(symbol);
+                    container.style.position = 'relative';
+                    container.style.width = p.width;
+                    container.style.height = p.height;
+                    container.style.textAlign = 'center';
+                    container.style.display = 'inline-block';
+                    container.style.margin = p.margin;
+                    
+                    img.style.opacity = '1';
+                    container.onmouseover = hoverIn;
+                    container.onmouseout = hoverOut;
+                    container.onmousedown = mouseDown;
+                    container.onmouseup = mouseUp;
+
+                    return container;
+
+                };
+
+                
+
+                var calculator = document.createElement('div');
+                calculator.style.position = 'absolute';
+                calculator.style.top = '0px';
+                calculator.style.left = '0px';
+                calculator.style.width = p.width; //'200px';
+                calculator.style.height = p.height;//'300px';
+                calculator.style.border = '1px solid #000000';
+
+                var display = document.createElement('div');
+                display.style.top = '0px';
+                display.style.width = '100%';
+                display.style.height = parseInt(calculator.style.height) / 5;
+                display.style.textAlign = 'right';
+                display.style.fontSize = .95 * parseInt(display.style.height);
+
+                calculator.appendChild(display);
+
+                var keypad = document.createElement('ul');
+                keypad.style.listStyle = 'none';
+                keypad.style.position = 'relative';
+                keypad.style.left = '0px';
+                keypad.style.width = calculator.style.width;
+                keypad.style.height = parseInt(calculator.style.height) - parseInt(display.style.height);
+                calculator.appendChild(keypad);
+                
+                var buttons = [];
+                var buttonMargin = 1;
+                var buttonWidth = (parseInt(keypad.style.width) / 4) - (buttonMargin * 2);
+                var buttonHeight = (parseInt(keypad.style.height) / 5) - (buttonMargin * 2);
+                buttons.push(new Button({symbol: '1', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '2', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '3', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '+', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '4', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '5', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '6', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '-', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '7', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '8', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '9', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '%', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '=', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '0', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: '.', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: 'x', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({display: 'x^2', symbol: 's', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({display: 'Sqrt', symbol: 'r', width: buttonWidth, height: buttonHeight, margin: buttonMargin}));
+                buttons.push(new Button({symbol: 'C', width: buttonWidth * 2, height: buttonHeight, margin: buttonMargin}));
+
+                for (var i = 0; i < buttons.length; i++) {
+                    keypad.appendChild(buttons[i]);
+
+
+                }
+            
+                return calculator;
+             }
+
